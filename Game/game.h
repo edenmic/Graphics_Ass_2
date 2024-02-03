@@ -13,6 +13,7 @@ public:
 	void WhenRotate();
 	void WhenTranslate();
 	void Motion();
+	//glm::vec3 Game::showCheckerboard(glm::vec3 hitPoint);
 	~Game(void);
 };
 

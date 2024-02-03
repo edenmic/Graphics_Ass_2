@@ -27,7 +27,6 @@ void Game::Init()
 	AddShader("../res/shaders/pickingShader");	
 	AddShader("../res/shaders/basicShader");
 	
-	AddTexture("../res/textures/box0.bmp",false);
 
 	AddShape(Plane,-1,TRIANGLES);
 	
@@ -39,6 +38,7 @@ void Game::Init()
 	
 	//ReadPixel(); //uncomment when you are reading from the z-buffer
 }
+
 
 void Game::Update(const glm::mat4 &MVP,const glm::mat4 &Model,const int  shaderIndx)
 {
