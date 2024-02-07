@@ -41,7 +41,7 @@ int main(int argc,char *argv[])
 	
 	Display display(DISPLAY_WIDTH, DISPLAY_HEIGHT, "OpenGL");
 	
-	Init(display);
+	Init(display); //blah blah
 	
 	scn->Init();
 	//showCheckerboard(hitPoint);
