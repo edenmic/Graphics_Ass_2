@@ -1,5 +1,7 @@
 #pragma once
+#ifndef LIGHT_H
 #include <vector>
+
 
 class Light
 {
@@ -11,3 +13,5 @@ public:
     Light(char type, std::vector<float> direction, std::vector<float> position, std::vector<float> intensity);
     Light(char type, std::vector<float> direction);
 };
+
+#endif

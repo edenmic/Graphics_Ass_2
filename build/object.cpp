@@ -1,6 +1,6 @@
 #include "object.h"
 
-Object:: Object(std::vector<float> color, float shininess) {
+Object:: Object(glm::vec3 color, float shininess) {
 	this->color = color;
 	this->shininess = shininess;
 }

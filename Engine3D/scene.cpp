@@ -265,6 +265,13 @@
 		}
 
 }
+	/*void Scene::AddSphere(const glm::vec3& position, float radius) {
+		Sphere* sphere = new Sphere(position, radius, 7, 0);
+		sphere->SetShader(/* specify the shader index for the sphere );
+		sphere->SetTexture(/* specify the texture index for the sphere );
+		shapes.push_back(sphere);
+	}
+	*/
 
 
 	 

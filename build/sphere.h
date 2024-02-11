@@ -1,14 +1,15 @@
 #pragma once
 #include <vector>
+#include "../res/includes/glm/glm.hpp"
 #include "object.h"
 
 class Sphere : public Object
 {
 private:
-    double radius;
-    std::vector<float> centerPoint;
+    float radius;
+    glm::vec3 centerPoint;
 
 public:
-    Sphere(double radius, std::vector<float> centerPoint, std::vector<float> color, float shininess);
+    Sphere(float radius, glm::vec3 centerPoint, glm::vec3 color, float shininess);
     ~Sphere(void);
 };

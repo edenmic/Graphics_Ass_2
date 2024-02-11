@@ -6,6 +6,7 @@
 #include <vector>
 
 
+
 class Scene : public MovableGLM
 {
 
@@ -14,7 +15,7 @@ public:
 	enum transformations{xTranslate, yTranslate, zTranslate, xRotate, yRotate, zRotate, xScale, yScale, zScale, xCameraTranslate, yCameraTranslate, zCameraTranslate};
 	enum modes{POINTS, LINES, LINE_LOOP, LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN, QUADS};
 	enum buffers{COLOR, DEPTH, STENCIL, BACK, FRONT, ACCUM, NONE };
-	enum shapes{Axis, Plane, Cube, Octahedron, Tethrahedron, LineCopy, MeshCopy};
+	enum shapes{Axis, Plane, Cube, Octahedron, Tethrahedron, LineCopy, MeshCopy, Sphere}; //added sphere
 	
 	Scene();
 	Scene(float angle,float relationWH,float near, float far);
@@ -62,6 +63,9 @@ public:
 	
 	inline void SetShapeTex(int shpIndx,int texIndx){shapes[shpIndx]->SetTexture(texIndx);} 
 	inline void SetShapeShader(int shpIndx,int shdrIndx){shapes[shpIndx]->SetShader(shdrIndx);} 
+
+	//added:
+	void Scene::AddSphere(const glm::vec3& position, float radius);
 	
 private:	
 	
