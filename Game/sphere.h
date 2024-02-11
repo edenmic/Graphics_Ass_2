@@ -10,6 +10,6 @@ private:
     glm::vec3 centerPoint;
 
 public:
-    Sphere(float radius, glm::vec3 centerPoint, glm::vec3 color, float shininess);
+    Sphere(float radius, glm::vec3 centerPoint, glm::vec3 rgb_color, float shininess);
     ~Sphere(void);
 };

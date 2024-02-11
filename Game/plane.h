@@ -10,6 +10,7 @@ private:
     glm::vec3 normal;
 
 public:
-    Plane(double d, glm::vec3 normal, glm::vec3 color, float shininess);
+    Plane(double d, glm::vec3 normal, glm::vec3 rgb_color, float shininess);
     ~Plane(void);
+    glm::vec3 getColor(glm::vec3 hitPoint);
 };

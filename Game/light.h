@@ -1,17 +1,13 @@
 #pragma once
-#ifndef LIGHT_H
 #include <vector>
-
+#include "../res/includes/glm/glm.hpp"
 
 class Light
 {
+private:
+    glm::vec3 direction;  // Light direction (x, y, z, w)
+    glm::vec4 intensity;  // Light intensity (R, G, B, A)
 public:
-    char type;  // 'd' for directional light, 'p' for spotlight
-    std::vector<float> direction;  // Light direction (x, y, z, w)
-    std::vector<float> position;   // Light position (x, y, z, w) for spotlights
-    std::vector<float> intensity;  // Light intensity (R, G, B, A)
-    Light(char type, std::vector<float> direction, std::vector<float> position, std::vector<float> intensity);
-    Light(char type, std::vector<float> direction);
+    Light(glm::vec3 direction, glm::vec4 intensity);
+    ~Light();
 };
-
-#endif
