@@ -13,7 +13,7 @@
 
 std::vector<Light> lights;
 std::vector<Object> objects;
-Camera camera;
+//Camera camera;
 
 void readScene(const std::string& filename) {
     std::ifstream file(filename);
@@ -29,9 +29,9 @@ void readScene(const std::string& filename) {
         iss >> type;
 
         //for objects:
-        glm::vec3 colors;
+        glm::vec3 colors; //this is rgb_color
         float shininess;
-        glm::vec3 normal; //for plane
+        glm::vec3 normal; //for plane// add some algebra
         float d; //for plane
         glm::vec3 centerPoint; //for sphere
         float radius; //for sphere
@@ -41,7 +41,7 @@ void readScene(const std::string& filename) {
         glm::vec4 position;
         glm::vec4 intensity;
 
-        if (type == 'e') {
+        if (type == 'e') { //use func moveCamera
             // Camera coordinates
             float eye[4];
             iss >> eye[0] >> eye[1] >> eye[2] >> eye[3];
@@ -87,7 +87,7 @@ void readScene(const std::string& filename) {
         else if (type == 't') {
             // trasparent
         }
-        else if (type == 'c') { 
+        else if (type == 'c') {
             float cord1, cord2, cord3, cord4;
             iss >> cord1 >> cord2 >> cord3 >> cord4;
             colors.x = cord1;
