@@ -1,13 +1,19 @@
 #include "plane.h"
 
 
-Plane:: Plane(double d, glm::vec3 normal, glm::vec3 rgb_color, float shininess) : Object(rgb_color, shininess) {
+Plane:: Plane(double d, glm::vec3 normal, glm::vec3 rgb_color, float shininess){
 	this->d = d;
 	this->normal = normal;
+	this->rgb_color = rgb_color;
+	this->shininess = shininess;
+
 }
 
 Plane:: ~Plane(void) {
 
+}
+double Plane::findIntersect(glm::vec3 ray, glm::vec3 src) {
+	return -1;
 }
 
 glm::vec3 Plane::getColor(glm::vec3 hitPoint) {

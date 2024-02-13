@@ -14,11 +14,13 @@
 #include <vector>
 
 std::vector<Light> lights;
-std::vector<Object> objects;
+std::vector<Object*> objects;
 glm::vec4 ambientLight;
+glm::vec3 camera;
 
-void readScene(const std::string& filename) {
+void readScene(const std::string filename) {
     std::ifstream file(filename);
+
     if (!file.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return;
@@ -39,9 +41,10 @@ void readScene(const std::string& filename) {
         char type;
         iss >> type;
 
-        if (type == 'e') { // Camera coordinates
+        if (type == 'e') { // Camera coordinates - add to global
             float eye[4];
             iss >> eye[0] >> eye[1] >> eye[2] >> eye[3];
+            camera.x = eye[0]; camera.y = eye[1]; camera.z = eye[2];
             // option 1 - use MoveCamera function
             // option 2 - store the values and consider every calculation
         }
@@ -146,12 +149,12 @@ void readScene(const std::string& filename) {
             glm::vec3 rgb_color;
             rgb_color.x = curr[5]; rgb_color.y = curr[6]; rgb_color.z = curr[7];
             float shininess = curr[8];
-            Sphere sphere = Sphere(radius, centerPoint, rgb_color, shininess);
+            Object* sphere = new Sphere(radius, centerPoint, rgb_color, shininess);
             if (curr[0] == 1.0) { //reflactive
-                sphere.setReflectiveTrue();
+                sphere->setReflectiveTrue();
             }
             else if (curr[0] == 2.0) { //tranparent
-                sphere.setTransparentTrue();
+                sphere->setTransparentTrue();
             }
             objects.push_back(sphere);
         }
@@ -162,17 +165,27 @@ void readScene(const std::string& filename) {
             glm::vec3 rgb_color;
             rgb_color.x = curr[5]; rgb_color.y = curr[6]; rgb_color.z = curr[7];
             float shininess = curr[8];
-            Plane plane = Plane(d, normal, rgb_color, shininess);
+            Object* plane = new Plane(d, normal, rgb_color, shininess);
             if (curr[0] == 1.0) { //reflactive
-                plane.setReflectiveTrue();
+                plane->setReflectiveTrue();
             }
             else if (curr[0] == 2.0) { //tranparent
-                plane.setTransparentTrue();
+                plane->setTransparentTrue();
             }
             objects.push_back(plane);
         }
     }
     file.close();
+}
+
+glm::vec3 calculate3Dcord(int i, int j, double lengthPixel) {
+    glm::vec3 startingPoint = { -1,1,0 };
+    glm::vec3 currPoint;
+    currPoint.x = startingPoint[0] + lengthPixel / 2 + lengthPixel * i;
+    currPoint.y = startingPoint[1] - lengthPixel / 2 - lengthPixel * j;
+    currPoint.z = startingPoint[2];
+    return currPoint;
+
 }
 
 int main(int argc, char* argv[]) {
@@ -188,7 +201,7 @@ int main(int argc, char* argv[]) {
     scn->Init();
     display.SetScene(scn);
     //for scene 1:
-    readScene("..res\txt scenes\scene1.txt");
+    readScene("../res/txt_scenes/scene1.txt");
     //for scene 2:
   //  readScene("..res\txt scenes\scene2.txt");
     //for scene 3:
@@ -200,6 +213,35 @@ int main(int argc, char* argv[]) {
 
     //now the the ambient, objects and lights vectors are set.
 
+    unsigned char* data = (unsigned char*)malloc(DISPLAY_HEIGHT * DISPLAY_WIDTH * 4);
+    double lengthPixel = (double)2 / (double)800;
+    for (int i = 0; i < DISPLAY_HEIGHT; i++) {
+        for (int j = 0; j < DISPLAY_WIDTH; j++) {
+            glm::vec3 currPoint = calculate3Dcord(i, j, lengthPixel);
+            glm::vec3 ray = glm::normalize(currPoint - camera); 
+
+            double t = objects[1]->findIntersect(ray, camera);
+            
+            //double t = 1;
+            if (t > 0 ) {
+                data[(i + j * DISPLAY_WIDTH) * 4] = 255;
+                data[(i + j * DISPLAY_WIDTH) * 4 + 1] = 0;
+                data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
+            }
+            else {
+                data[(i + j * DISPLAY_WIDTH) * 4] = 0;
+                data[(i + j * DISPLAY_WIDTH) * 4 + 1] = 0;
+                data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
+            }
+            
+        }
+    }
+    scn->AddTexture(DISPLAY_WIDTH, DISPLAY_HEIGHT, data);
+    scn->SetShapeTex(0, 0);
+    
+
+    
+
     //calculate every pixel value: 
     // ????????????????????????????????????????
 
@@ -209,6 +251,7 @@ int main(int argc, char* argv[]) {
         scn->Motion();
         display.SwapBuffers();
         display.PollEvents();
+
     }
 
     delete scn;
