@@ -10,7 +10,6 @@
 #include "object.h"
 #include "plane.h"
 #include "sphere.h"
-//#include "spotlight.h"
 #include <vector>
 using namespace glm;
 
