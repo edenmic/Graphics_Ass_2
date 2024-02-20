@@ -15,7 +15,7 @@
 
 std::vector<Light> lights;
 std::vector<Object*> objects;
-glm::vec4 ambientLight;
+glm::vec3 ambientLight;
 glm::vec3 camera;
 
 void readScene(const std::string filename) {
@@ -49,7 +49,7 @@ void readScene(const std::string filename) {
             // option 2 - store the values and consider every calculation
         }
         else if (type == 'a') { // Ambient light
-            iss >> ambientLight.x >> ambientLight.y >> ambientLight.z >> ambientLight.w; //store the ambient values in global variable
+            iss >> ambientLight.x >> ambientLight.y >> ambientLight.z; //store the ambient values in global variable
         }
         else if (type == 'd') { //lightning - directional or spotlight
             float cord1, cord2, cord3, cord4;
@@ -203,13 +203,13 @@ int main(int argc, char* argv[]) {
     //for scene 1:
     readScene("../res/txt_scenes/scene1.txt");
     //for scene 2:
-  //  readScene("..res\txt scenes\scene2.txt");
+    //readScene("../res/txt_scenes/scene2.txt");
     //for scene 3:
-  //   readScene("..res\txt scenes\scene3.txt");
+     //readScene("../res/txt_scenes/scene3.txt");
     //for scene 4:
- //   readScene("..res\txt scenes\scene4.txt");
+ //   readScene("../res/txt_scenes/scene4.txt");
     //for scene 5:
-  //  readScene("..res\txt scenes\scene5.txt");
+  //  readScene("../res/txt_scenes/scene5.txt");
 
     //now the the ambient, objects and lights vectors are set.
 
@@ -218,24 +218,50 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < DISPLAY_HEIGHT; i++) {
         for (int j = 0; j < DISPLAY_WIDTH; j++) {
             glm::vec3 currPoint = calculate3Dcord(i, j, lengthPixel);
-            glm::vec3 ray = glm::normalize(currPoint - camera); 
+            glm::vec3 ray = glm::normalize(currPoint - camera);
 
-            double t = objects[1]->findIntersect(ray, camera);
-            
-            //double t = 1;
-            if (t > 0 ) {
-                data[(i + j * DISPLAY_WIDTH) * 4] = 255;
-                data[(i + j * DISPLAY_WIDTH) * 4 + 1] = 0;
-                data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
+            double closestT = std::numeric_limits<double>::infinity();
+            Object* closestObject = nullptr;
+
+            // Find closest intersection with objects
+            for (Object* obj : objects) {
+                double t = obj->findIntersect(ray, camera);
+                if (t > 0 && t < closestT) {
+                    closestT = t;
+                    closestObject = obj;
+                }
+            }
+
+            // If intersection found, calculate pixel color
+            if (closestObject != nullptr) {
+                glm::vec3 color;
+
+                // Check the actual class type of the closest object
+                Sphere* sphere = dynamic_cast<Sphere*>(closestObject);
+                if (sphere != nullptr) {
+                    // Red for spheres
+                    color = sphere->rgb_color * ambientLight;
+                }
+                else {
+                    Plane* plane = dynamic_cast<Plane*>(closestObject);
+                    
+                    color = plane->rgb_color * ambientLight;
+                }
+
+                // Set pixel color
+                data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
+                data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
+                data[(i + j * DISPLAY_WIDTH) * 4 + 2] = color.b * 255;
             }
             else {
+                // No intersection, set pixel to black
                 data[(i + j * DISPLAY_WIDTH) * 4] = 0;
                 data[(i + j * DISPLAY_WIDTH) * 4 + 1] = 0;
                 data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
             }
-            
         }
     }
+
     scn->AddTexture(DISPLAY_WIDTH, DISPLAY_HEIGHT, data);
     scn->SetShapeTex(0, 0);
     

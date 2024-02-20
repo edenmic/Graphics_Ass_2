@@ -4,13 +4,13 @@
 
 class Object
 {
-protected:
+public:
     glm::vec3 rgb_color;     
     float shininess;    
     bool reflective;
     bool transparent;
 
-public:
+
     //Object(glm::vec3 rgb_color, float shininess);
     //~Object(void);
     virtual void setReflectiveTrue() = 0;
