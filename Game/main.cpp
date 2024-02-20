@@ -211,6 +211,32 @@ glm::vec3 diffuseRef(Object* o, Light light,vec3 hitPoint ) {
     return diffColor;
 }
 
+glm::vec3 specularRef(Object* o, Light light, vec3 hitPoint) {
+    vec3 n = o->getNormal(hitPoint);  // Normal at the hit point
+    if (o->flag == 0) {
+        n = -n;
+    }
+    vec3 v = normalize(camera - hitPoint);  // View direction
+
+    vec3 specularColor = vec3(0);
+
+    if (light.flag == 0) {
+        vec3 l = -light.direction;
+        vec3 r = reflect(-l, n);  // Reflected light direction
+        float specularTerm = pow(glm::max(dot(r, v), 0.0f), o->shininess);
+        specularColor += light.intensity * vec3(0.7, 0.7, 0.7) * specularTerm;
+    }
+    else {
+        vec3 l = normalize(hitPoint - light.position);
+        vec3 r = reflect(-l, n);  // Reflected light direction
+        float specularTerm = pow(glm::max(dot(r, v), 0.0f), o->shininess);
+        specularColor += light.intensity * vec3(0.7, 0.7, 0.7) * specularTerm;
+    }
+
+    return specularColor;
+}
+
+
 
 int main(int argc, char* argv[]) {
     const int DISPLAY_WIDTH = 800;
@@ -268,6 +294,15 @@ int main(int argc, char* argv[]) {
                     vec3 diff = diffuseRef(closestObject, li, hitPoint);
                     diff = glm::min(glm::max(diff, 0.f), 1.f);
                     color += diff;
+
+                    // Calculate specular reflection
+                    glm::vec3 specularColor = specularRef(closestObject, li, hitPoint);
+                    color += specularColor;
+
+                    // Set pixel color
+                    data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
+                    data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
+                    data[(i + j * DISPLAY_WIDTH) * 4 + 2] = color.b * 255;
                 }
 
                 color = glm::min(glm::max(color, 0.f), 1.f);
@@ -282,6 +317,8 @@ int main(int argc, char* argv[]) {
                 data[(i + j * DISPLAY_WIDTH) * 4 + 1] = 0;
                 data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
             }
+
+            
         }
     }
 
