@@ -4,10 +4,14 @@
 
 class Light
 {
-private:
-    glm::vec3 direction;  // Light direction (x, y, z, w)
-    glm::vec4 intensity;  // Light intensity (R, G, B, A)
 public:
-    Light(glm::vec3 direction, glm::vec4 intensity);
+    glm::vec3 direction;  // Light direction (x, y, z, w)
+    glm::vec3 intensity;  // Light intensity (R, G, B, A)
+    int flag;
+    glm::vec3 position;
+    float angleCutOff;
+
+    Light(glm::vec3 direction, glm::vec3 intensity,int flag);
+    void spotLight(glm::vec4 spotPar);
     ~Light();
 };

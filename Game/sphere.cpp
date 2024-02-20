@@ -6,14 +6,17 @@ Sphere:: Sphere(float radius, glm::vec3 centerPoint, glm::vec3 rgb_color, float 
 	this->centerPoint = centerPoint;
 	this->rgb_color = rgb_color;
 	this->shininess = shininess;
+	this->flag = 1;
 
 }
 
 Sphere:: ~Sphere(void) {
 
 }
-
-	double Sphere::findIntersect(glm::vec3 ray, glm::vec3 src) {
+glm::vec3 Sphere::getNormal(glm::vec3 hitPoint) {
+	return glm::normalize(hitPoint - this->centerPoint);
+}
+double Sphere::findIntersect(glm::vec3 ray, glm::vec3 src) {
 		//t is the return value- if t is negative there is no intersect, else- return the t value of the intersect
 	double a = 1;
 	double b = 2 * glm::dot(ray, src - this->centerPoint);

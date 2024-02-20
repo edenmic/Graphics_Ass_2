@@ -3,15 +3,20 @@
 
 Plane:: Plane(double d, glm::vec3 normal, glm::vec3 rgb_color, float shininess){
 	this->d = d;
-	this->normal = normal;
+	this->normal = glm::normalize(normal);
 	this->rgb_color = rgb_color;
 	this->shininess = shininess;
+	this->flag = 0;
 
 }
 
 Plane:: ~Plane(void) {
 
 }
+glm::vec3 Plane::getNormal(glm::vec3 hitPoint) {
+	return this->normal;
+}
+
 /*double Plane::findIntersect(glm::vec3 ray, glm::vec3 src) {
 	return -1;
 }*/

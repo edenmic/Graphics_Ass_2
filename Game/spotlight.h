@@ -1,5 +1,4 @@
-#pragma once
-#include <vector>
+/*#include <vector>
 #include "../res/includes/glm/glm.hpp"
 #include "light.h"
 
@@ -11,4 +10,4 @@ private:
 public:
     Spotlight(glm::vec3 direction, glm::vec4 position, glm::vec4 intensity);
     ~Spotlight();
-};
+};*/

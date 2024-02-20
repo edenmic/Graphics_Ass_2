@@ -10,8 +10,9 @@
 #include "object.h"
 #include "plane.h"
 #include "sphere.h"
-#include "spotlight.h"
+//#include "spotlight.h"
 #include <vector>
+using namespace glm;
 
 std::vector<Light> lights;
 std::vector<Object*> objects;
@@ -123,9 +124,9 @@ void readScene(const std::string filename) {
         if (curr[0] == 0.0) { //directinal
             glm::vec3 direction;
             direction.x = curr[1]; direction.y = curr[2]; direction.z = curr[3];
-            glm::vec4 intensity;
-            intensity.x = curr[4]; intensity.y = curr[5]; intensity.z = curr[6]; intensity.w = curr[7];
-            Light light = Light(direction, intensity);
+            glm::vec3 intensity;
+            intensity.x = curr[4]; intensity.y = curr[5]; intensity.z = curr[6];
+            Light light = Light(direction, intensity, (int)curr[0]);
             lights.push_back(light);
         }
         else { //spotlight
@@ -133,9 +134,10 @@ void readScene(const std::string filename) {
             direction.x = curr[1]; direction.y = curr[2]; direction.z = curr[3];
             glm::vec4 position;
             position.x = curr[4]; position.y = curr[5]; position.z = curr[6]; position.w = curr[7];
-            glm::vec4 intensity;
-            intensity.x = curr[8]; intensity.y = curr[9]; intensity.z = curr[10]; intensity.w = curr[11];
-            Spotlight light = Spotlight(direction, position, intensity);
+            glm::vec3 intensity;
+            intensity.x = curr[8]; intensity.y = curr[9]; intensity.z = curr[10];
+            Light light = Light(direction, intensity, (int)curr[0]);
+            light.spotLight(position);
             lights.push_back(light);
         }
     }
@@ -187,6 +189,29 @@ glm::vec3 calculate3Dcord(int i, int j, double lengthPixel) {
     return currPoint;
 
 }
+glm::vec3 diffuseRef(Object* o, Light light,vec3 hitPoint ) {
+    vec3 n = o->getNormal(hitPoint);//Normal hit point
+    if (o->flag == 0) {
+        n = -n;
+    }
+    vec3 diffColor = vec3(0);
+    
+    if (light.flag == 0) {
+        vec3 l = -light.direction;
+        diffColor += o->rgb_color * dot(n, l) * light.intensity;
+    }
+    else {
+        vec3 l = normalize(hitPoint - light.position);
+        float cosAngle = dot(l, light.direction);
+        if (cosAngle > light.angleCutOff) {
+            diffColor += o->rgb_color * dot(n, -l) * light.intensity;
+        }
+    }
+   
+    //diffColor = glm::min(glm::max(diffColor, 0.0f), 1.0f);
+    return diffColor;
+}
+
 
 int main(int argc, char* argv[]) {
     const int DISPLAY_WIDTH = 800;
@@ -236,18 +261,17 @@ int main(int argc, char* argv[]) {
             if (closestObject != nullptr) {
                 glm::vec3 color;
 
-                // Check the actual class type of the closest object
-                Sphere* sphere = dynamic_cast<Sphere*>(closestObject);
-                if (sphere != nullptr) {
-                    // Red for spheres
-                    color = sphere->rgb_color * ambientLight;
-                }
-                else {
-                    Plane* plane = dynamic_cast<Plane*>(closestObject);
-                    
-                    color = plane->rgb_color * ambientLight;
+                color = closestObject->rgb_color * ambientLight;
+
+                
+                glm::vec3 hitPoint = camera + (float)closestT * ray;
+                for (Light li : lights) {
+                    vec3 diff = diffuseRef(closestObject, li, hitPoint);
+                    diff = glm::min(glm::max(diff, 0.f), 1.f);
+                    color += diff;
                 }
 
+                color = glm::min(glm::max(color, 0.f), 1.f);
                 // Set pixel color
                 data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
                 data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
