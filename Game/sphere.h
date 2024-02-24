@@ -20,4 +20,5 @@ public:
     void setTransparentTrue() {
         this->transparent = true;
     }
+    glm::vec3 getColor(glm::vec3 hitPoint);
 };

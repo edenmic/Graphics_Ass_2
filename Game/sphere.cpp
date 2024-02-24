@@ -36,3 +36,7 @@ double Sphere::findIntersect(glm::vec3 ray, glm::vec3 src) {
 		return std::min(t1, t2); //add later if we calc the inner intersect return max
 	}
 }
+
+glm::vec3 Sphere::getColor(glm::vec3 hitPoint) {
+	return rgb_color;
+}

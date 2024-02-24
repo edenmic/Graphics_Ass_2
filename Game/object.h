@@ -19,4 +19,6 @@ public:
     virtual void setReflectiveTrue() = 0;
     virtual void setTransparentTrue() = 0;
     virtual double findIntersect(glm::vec3 ray, glm::vec3 src) = 0;
+
+    virtual glm::vec3 getColor(glm::vec3 hitPoint) = 0;
 };

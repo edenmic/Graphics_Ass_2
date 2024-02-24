@@ -57,7 +57,7 @@ void readScene(const std::string filename) {
             std::vector<float> light;
             if (cord4 == 0.0) { //directional
                 light.push_back(0.0); //represent directional light
-                
+
             }
             else { //spotlight
                 light.push_back(1.0);
@@ -188,25 +188,33 @@ glm::vec3 calculate3Dcord(int i, int j, double lengthPixel) {
     return currPoint;
 
 }
-glm::vec3 diffuseRef(Object* o, Light light,vec3 hitPoint ) {
+glm::vec3 diffuseRef(Object* o, Light light, vec3 hitPoint) {
     vec3 n = o->getNormal(hitPoint);//Normal hit point
     if (o->flag == 0) {
         n = -n;
     }
     vec3 diffColor = vec3(0);
-    
+
+    glm::vec3 objectColor;
+    if (o->flag == 0) { //is plane
+        objectColor = o->getColor(hitPoint);
+    }
+    else { //is sphere
+        objectColor = o->rgb_color;
+    }
+
     if (light.flag == 0) {
         vec3 l = -light.direction;
-        diffColor += o->rgb_color * dot(n, l) * light.intensity;
+        diffColor += objectColor * dot(n, l) * light.intensity;
     }
     else {
         vec3 l = normalize(hitPoint - light.position);
         float cosAngle = dot(l, light.direction);
         if (cosAngle > light.angleCutOff) {
-            diffColor += o->rgb_color * dot(n, -l) * light.intensity;
+            diffColor += objectColor * dot(n, -l) * light.intensity;
         }
     }
-   
+
     //diffColor = glm::min(glm::max(diffColor, 0.0f), 1.0f);
     return diffColor;
 }
@@ -220,7 +228,7 @@ glm::vec3 specularRef(Object* o, Light light, vec3 hitPoint) {
 
     vec3 specularColor = vec3(0);
 
-    if (light.flag == 0) {
+    if (light.flag == 0) { //directional
         vec3 l = -light.direction;
         vec3 r = reflect(-l, n);  // Reflected light direction
         float specularTerm = pow(glm::max(dot(r, v), 0.0f), o->shininess);
@@ -253,9 +261,9 @@ int main(int argc, char* argv[]) {
     //for scene 1:
     readScene("../res/txt_scenes/scene1.txt");
     //for scene 2:
-    //readScene("../res/txt_scenes/scene2.txt");
+  //  readScene("../res/txt_scenes/scene2.txt");
     //for scene 3:
-     //readScene("../res/txt_scenes/scene3.txt");
+  //   readScene("../res/txt_scenes/scene3.txt");
     //for scene 4:
  //   readScene("../res/txt_scenes/scene4.txt");
     //for scene 5:
@@ -286,23 +294,64 @@ int main(int argc, char* argv[]) {
             if (closestObject != nullptr) {
                 glm::vec3 color;
 
-                color = closestObject->rgb_color * ambientLight;
+                //  color = closestObject->rgb_color * ambientLight;
 
-                
+
                 glm::vec3 hitPoint = camera + (float)closestT * ray;
+
+
+                //if its plane show chessboard: 
+                if (closestObject->flag == 0) { //is plane
+                    glm::vec3 planeColor = closestObject->getColor(hitPoint);
+                    color = planeColor * ambientLight;
+                }
+                else { //its not plane, usual color
+                    color = closestObject->rgb_color * ambientLight;
+                }
+
+
                 for (Light li : lights) {
-                    vec3 diff = diffuseRef(closestObject, li, hitPoint);
-                    diff = glm::min(glm::max(diff, 0.f), 1.f);
-                    color += diff;
 
+                    // for shadowing:
+                    glm::vec3 shadowRayDir;
+                    bool isInShadow = false;
+                    if (li.flag == 0) {
+                        shadowRayDir = -li.direction; // Directional light
+                    }
+                    else {
+                        shadowRayDir = normalize(li.position - hitPoint); // Spotlight
+                    }
+                    // Offset the shadow ray origin slightly to avoid self-shadowing artifacts
+                    glm::vec3 shadowRayOrigin = hitPoint + 0.001f * shadowRayDir;
+                    // Check for intersections with objects in the scene
+                    for (Object* obj : objects) {
+                        double shadowT = obj->findIntersect(shadowRayDir, shadowRayOrigin);
+                        // If there is an intersection along the shadow ray, the hit point is in shadow
+                        if (shadowT > 0 && shadowT < std::numeric_limits<double>::infinity()) {
+                            isInShadow = true;
+                            break;
+                        }
+                    }
+                    if (!isInShadow) {
+                        // Calculate diffuse
+                        vec3 diff = diffuseRef(closestObject, li, hitPoint);
+                        diff = glm::min(glm::max(diff, 0.f), 1.f);
+                        color += diff;
+                        // Calculate specular reflection
+                        glm::vec3 specularColor = specularRef(closestObject, li, hitPoint);
+                        color += specularColor;
+                    }
+
+
+
+                    // Calculate diffuse
+                  //  vec3 diff = diffuseRef(closestObject, li, hitPoint);
+                //    diff = glm::min(glm::max(diff, 0.f), 1.f);
+                 //   color += diff;
                     // Calculate specular reflection
-                    glm::vec3 specularColor = specularRef(closestObject, li, hitPoint);
-                    color += specularColor;
+                 //   glm::vec3 specularColor = specularRef(closestObject, li, hitPoint);
+                 //   color += specularColor;
 
-                    // Set pixel color
-                    data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
-                    data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
-                    data[(i + j * DISPLAY_WIDTH) * 4 + 2] = color.b * 255;
                 }
 
                 color = glm::min(glm::max(color, 0.f), 1.f);
@@ -318,18 +367,12 @@ int main(int argc, char* argv[]) {
                 data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
             }
 
-            
+
         }
     }
 
     scn->AddTexture(DISPLAY_WIDTH, DISPLAY_HEIGHT, data);
     scn->SetShapeTex(0, 0);
-    
-
-    
-
-    //calculate every pixel value: 
-    // ????????????????????????????????????????
 
     // Main loop
     while (!display.CloseWindow()) {
