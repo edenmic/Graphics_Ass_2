@@ -190,9 +190,6 @@ glm::vec3 calculate3Dcord(int i, int j, double lengthPixel) {
 }
 glm::vec3 diffuseRef(Object* o, Light light, vec3 hitPoint) {
     vec3 n = o->getNormal(hitPoint);//Normal hit point
-    if (o->flag == 0) {
-        n = -n;
-    }
     vec3 diffColor = vec3(0);
 
     glm::vec3 objectColor;
@@ -204,12 +201,12 @@ glm::vec3 diffuseRef(Object* o, Light light, vec3 hitPoint) {
     }
 
     if (light.flag == 0) {
-        vec3 l = -light.direction;
+        vec3 l = normalize( - light.direction);
         diffColor += objectColor * dot(n, l) * light.intensity;
     }
     else {
         vec3 l = normalize(hitPoint - light.position);
-        float cosAngle = dot(l, light.direction);
+        float cosAngle = dot(l, normalize(light.direction));
         if (cosAngle > light.angleCutOff) {
             diffColor += objectColor * dot(n, -l) * light.intensity;
         }
@@ -219,31 +216,127 @@ glm::vec3 diffuseRef(Object* o, Light light, vec3 hitPoint) {
     return diffColor;
 }
 
-glm::vec3 specularRef(Object* o, Light light, vec3 hitPoint) {
+glm::vec3 specularRef(Object* o, Light light, vec3 hitPoint, vec3 currPoint) {
     vec3 n = o->getNormal(hitPoint);  // Normal at the hit point
-    if (o->flag == 0) {
-        n = -n;
-    }
-    vec3 v = normalize(camera - hitPoint);  // View direction
+    vec3 v = normalize(currPoint - hitPoint);  // View direction
 
     vec3 specularColor = vec3(0);
 
     if (light.flag == 0) { //directional
-        vec3 l = -light.direction;
-        vec3 r = reflect(-l, n);  // Reflected light direction
+        vec3 l = normalize(light.direction);
+        vec3 r = normalize(reflect(l, n));  // Reflected light direction
         float specularTerm = pow(glm::max(dot(r, v), 0.0f), o->shininess);
         specularColor += light.intensity * vec3(0.7, 0.7, 0.7) * specularTerm;
     }
     else {
         vec3 l = normalize(hitPoint - light.position);
-        vec3 r = reflect(-l, n);  // Reflected light direction
+        vec3 r = normalize(reflect(l, n));  // Reflected light direction
         float specularTerm = pow(glm::max(dot(r, v), 0.0f), o->shininess);
-        specularColor += light.intensity * vec3(0.7, 0.7, 0.7) * specularTerm;
+        float cosAngle = dot(l, light.direction);
+        if (cosAngle > light.angleCutOff) {
+            specularColor += light.intensity * vec3(0.7, 0.7, 0.7) * specularTerm;
+        }
     }
 
     return specularColor;
 }
 
+glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level) {
+    if (level > 5) {
+        return vec3(0);
+    }
+
+    double closestT = std::numeric_limits<double>::infinity();
+    Object* closestObject = nullptr;
+    glm::vec3 color;
+    // Find closest intersection with objects
+    for (Object* obj : objects) {
+        double t = obj->findIntersect(ray, currPoint);
+        if (t > 0 && t < closestT) {
+            closestT = t;
+            closestObject = obj;
+        }
+    }
+
+    // If intersection found, calculate pixel color
+    if (closestObject != nullptr) {
+        if (!closestObject->reflective && !closestObject->transparent) {
+
+            //  color = closestObject->rgb_color * ambientLight;
+
+
+            glm::vec3 hitPoint = currPoint + (float)closestT * ray;
+
+
+            //if its plane show chessboard: 
+            if (closestObject->flag == 0) { //is plane
+                glm::vec3 planeColor = closestObject->getColor(hitPoint);
+                color = planeColor * ambientLight;
+            }
+            else { //its not plane, usual color
+                color = closestObject->rgb_color * ambientLight;
+            }
+
+
+            for (Light li : lights) {
+
+                // for shadowing:
+                glm::vec3 shadowRayDir;
+                glm::vec3 shadowRayDirNot;
+                bool isInShadow = false;
+                if (li.flag == 0) {
+                    shadowRayDir = normalize(-li.direction); // Directional light
+                }
+                else {
+                    shadowRayDir = normalize(li.position - hitPoint); // Spotlight
+                    shadowRayDirNot = li.position - hitPoint;
+
+                }
+                // Offset the shadow ray origin slightly to avoid self-shadowing artifacts
+                glm::vec3 shadowRayOrigin = hitPoint;
+                double minShadowT = std::numeric_limits<double>::infinity();
+                // Check for intersections with objects in the scene
+                for (Object* obj : objects) {
+                    double shadowT = obj->findIntersect(shadowRayDir, shadowRayOrigin);
+                    // If there is an intersection along the shadow ray, the hit point is in shadow
+                    if (shadowT > 0 && shadowT < std::numeric_limits<double>::infinity()) {
+                        minShadowT = min(shadowT, minShadowT);
+
+                    }
+                }
+                if (minShadowT < std::numeric_limits<double>::infinity()) {
+                    if (li.flag == 0) {
+                        isInShadow = true;
+                    }
+                    else {
+                        if (glm::dot(shadowRayOrigin + ((float)minShadowT * shadowRayDir), shadowRayDirNot) < 0) {
+                            isInShadow = true;
+                        }
+                    }
+                }
+                if (!isInShadow) {
+                    // Calculate diffuse
+                    vec3 diff = diffuseRef(closestObject, li, hitPoint);
+                    diff = glm::min(glm::max(diff, 0.f), 1.f);
+                    color += diff;
+                    // Calculate specular reflection
+                    glm::vec3 specularColor = specularRef(closestObject, li, hitPoint, currPoint);
+                    color += specularColor;
+                }
+            }
+            color = glm::min(glm::max(color, 0.f), 1.f);
+        }
+        else if (closestObject->reflective) {
+            glm::vec3 hitPoint = currPoint + (float)closestT * ray;
+            vec3 newRay = normalize(reflect(ray, closestObject->getNormal(hitPoint)));
+            color = constructRayThroughPixel(hitPoint, newRay, level++);
+        }
+    }
+    else {
+        color = vec3(0);
+    }
+    return color;
+}
 
 
 int main(int argc, char* argv[]) {
@@ -259,15 +352,15 @@ int main(int argc, char* argv[]) {
     scn->Init();
     display.SetScene(scn);
     //for scene 1:
-    readScene("../res/txt_scenes/scene1.txt");
+ //   readScene("../res/txt_scenes/scene1.txt");
     //for scene 2:
-  //  readScene("../res/txt_scenes/scene2.txt");
+ //   readScene("../res/txt_scenes/scene2.txt");
     //for scene 3:
   //   readScene("../res/txt_scenes/scene3.txt");
     //for scene 4:
  //   readScene("../res/txt_scenes/scene4.txt");
     //for scene 5:
-  //  readScene("../res/txt_scenes/scene5.txt");
+    readScene("../res/txt_scenes/scene5.txt");
 
     //now the the ambient, objects and lights vectors are set.
 
@@ -278,97 +371,13 @@ int main(int argc, char* argv[]) {
             glm::vec3 currPoint = calculate3Dcord(i, j, lengthPixel);
             glm::vec3 ray = glm::normalize(currPoint - camera);
 
-            double closestT = std::numeric_limits<double>::infinity();
-            Object* closestObject = nullptr;
+            glm::vec3 color = constructRayThroughPixel(camera, ray, 0);
 
-            // Find closest intersection with objects
-            for (Object* obj : objects) {
-                double t = obj->findIntersect(ray, camera);
-                if (t > 0 && t < closestT) {
-                    closestT = t;
-                    closestObject = obj;
-                }
-            }
-
-            // If intersection found, calculate pixel color
-            if (closestObject != nullptr) {
-                glm::vec3 color;
-
-                //  color = closestObject->rgb_color * ambientLight;
-
-
-                glm::vec3 hitPoint = camera + (float)closestT * ray;
-
-
-                //if its plane show chessboard: 
-                if (closestObject->flag == 0) { //is plane
-                    glm::vec3 planeColor = closestObject->getColor(hitPoint);
-                    color = planeColor * ambientLight;
-                }
-                else { //its not plane, usual color
-                    color = closestObject->rgb_color * ambientLight;
-                }
-
-
-                for (Light li : lights) {
-
-                    // for shadowing:
-                    glm::vec3 shadowRayDir;
-                    bool isInShadow = false;
-                    if (li.flag == 0) {
-                        shadowRayDir = -li.direction; // Directional light
-                    }
-                    else {
-                        shadowRayDir = normalize(li.position - hitPoint); // Spotlight
-                    }
-                    // Offset the shadow ray origin slightly to avoid self-shadowing artifacts
-                    glm::vec3 shadowRayOrigin = hitPoint + 0.001f * shadowRayDir;
-                    // Check for intersections with objects in the scene
-                    for (Object* obj : objects) {
-                        double shadowT = obj->findIntersect(shadowRayDir, shadowRayOrigin);
-                        // If there is an intersection along the shadow ray, the hit point is in shadow
-                        if (shadowT > 0 && shadowT < std::numeric_limits<double>::infinity()) {
-                            isInShadow = true;
-                            break;
-                        }
-                    }
-                    if (!isInShadow) {
-                        // Calculate diffuse
-                        vec3 diff = diffuseRef(closestObject, li, hitPoint);
-                        diff = glm::min(glm::max(diff, 0.f), 1.f);
-                        color += diff;
-                        // Calculate specular reflection
-                        glm::vec3 specularColor = specularRef(closestObject, li, hitPoint);
-                        color += specularColor;
-                    }
-
-
-
-                    // Calculate diffuse
-                  //  vec3 diff = diffuseRef(closestObject, li, hitPoint);
-                //    diff = glm::min(glm::max(diff, 0.f), 1.f);
-                 //   color += diff;
-                    // Calculate specular reflection
-                 //   glm::vec3 specularColor = specularRef(closestObject, li, hitPoint);
-                 //   color += specularColor;
-
-                }
-
-                color = glm::min(glm::max(color, 0.f), 1.f);
-                // Set pixel color
-                data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
-                data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
-                data[(i + j * DISPLAY_WIDTH) * 4 + 2] = color.b * 255;
-            }
-            else {
-                // No intersection, set pixel to black
-                data[(i + j * DISPLAY_WIDTH) * 4] = 0;
-                data[(i + j * DISPLAY_WIDTH) * 4 + 1] = 0;
-                data[(i + j * DISPLAY_WIDTH) * 4 + 2] = 0;
-            }
-
-
+            data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
+            data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
+            data[(i + j * DISPLAY_WIDTH) * 4 + 2] = color.b * 255;
         }
+
     }
 
     scn->AddTexture(DISPLAY_WIDTH, DISPLAY_HEIGHT, data);

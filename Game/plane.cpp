@@ -14,22 +14,22 @@ Plane:: ~Plane(void) {
 
 }
 glm::vec3 Plane::getNormal(glm::vec3 hitPoint) {
-	return this->normal;
+	return -this->normal;
 }
 
 /*double Plane::findIntersect(glm::vec3 ray, glm::vec3 src) {
 	return -1;
 }*/
 double Plane::findIntersect(glm::vec3 ray, glm::vec3 src) {
-	double multi = 1;
-	if (normal.x != 0)
-		multi *= normal.x;
-	if (normal.y != 0)
-		multi *= normal.y;
-	if (normal.z != 0)
-		multi *= normal.z;
+//	double multi = 1;
+//	if (normal.x != 0)
+//		multi *= normal.x;
+//	if (normal.y != 0)
+	//	multi *= normal.y;
+//	if (normal.z != 0)
+	//	multi *= normal.z;
 
-	glm::vec3 q0 = glm::vec3(d / multi);//dot on the plane
+//	glm::vec3 q0 = glm::vec3(d / multi);//dot on the plane
     // Calculate the distance along the ray to the intersection point
 	//double t = glm::dot(normal,(q0-src)) / glm::dot(normal,ray);
     double numerator = -(glm::dot(src, normal)+d);//N*(Q0-P0)/N*V
@@ -44,7 +44,7 @@ double Plane::findIntersect(glm::vec3 ray, glm::vec3 src) {
     double t = numerator / denominator;
     
     // Check if the intersection point is behind the ray's source
-    if (t < 0) {
+    if (t < 0.001) {
         return -1; // No intersection
     }
     

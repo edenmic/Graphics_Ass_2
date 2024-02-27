@@ -7,8 +7,8 @@ class Object
 public:
     glm::vec3 rgb_color;     
     float shininess;    
-    bool reflective;
-    bool transparent;
+    bool reflective = false;
+    bool transparent = false;
     int flag;
 
 

@@ -33,7 +33,13 @@ double Sphere::findIntersect(glm::vec3 ray, glm::vec3 src) {
 	else {
 		double t1 = ((-b + sqrt(discriminant)) / (2 * a));
 		double t2 = ((-b - sqrt(discriminant)) / (2 * a));
-		return std::min(t1, t2); //add later if we calc the inner intersect return max
+		double res = std::min(t1, t2);
+		if (abs(res) < 0.001) {
+			return std::max(t1, t2);
+		}
+		else{
+			return res;
+		}
 	}
 }
 
