@@ -352,15 +352,15 @@ int main(int argc, char* argv[]) {
     scn->Init();
     display.SetScene(scn);
     //for scene 1:
- //   readScene("../res/txt_scenes/scene1.txt");
+    readScene("../res/txt_scenes/scene1.txt");
     //for scene 2:
  //   readScene("../res/txt_scenes/scene2.txt");
     //for scene 3:
   //   readScene("../res/txt_scenes/scene3.txt");
     //for scene 4:
- //   readScene("../res/txt_scenes/scene4.txt");
+   // readScene("../res/txt_scenes/scene4.txt");
     //for scene 5:
-    readScene("../res/txt_scenes/scene5.txt");
+  //  readScene("../res/txt_scenes/scene5.txt");
 
     //now the the ambient, objects and lights vectors are set.
 
