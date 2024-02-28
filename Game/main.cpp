@@ -331,8 +331,21 @@ glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level
             vec3 newRay = normalize(reflect(ray, closestObject->getNormal(hitPoint)));
             color = constructRayThroughPixel(hitPoint, newRay, level++);
         }
+        else if (closestObject->transparent) {
+            glm::vec3 hitPoint = currPoint + (float)closestT * ray;
+            glm::vec3 normal = closestObject->getNormal(hitPoint);
+            float eta = 1.0f / 1.5f; //the refractive index of a material
+            glm::vec3 refractedRay = glm::refract(ray, normal,  eta); //calculate the direction of the refracted ray
+            bool inside = glm::dot(ray, normal) > 0; //the ray is coming from the inside or the outside of a surface
+            if (!inside) { //comes from the outside of the surface
+                normal = -normal;
+            }
+            glm::vec3 refractedColor = constructRayThroughPixel(hitPoint + normal , refractedRay, level + 1);
+
+            color = 0.8f * refractedColor + 0.2f * constructRayThroughPixel(hitPoint, ray, level + 1);
+        }
     }
-    else {
+    else { 
         color = vec3(0);
     }
     return color;
@@ -351,8 +364,10 @@ int main(int argc, char* argv[]) {
     Init(display);
     scn->Init();
     display.SetScene(scn);
+  // for custom_scene
+    readScene("../res/txt_scenes/custom_scene.txt");
     //for scene 1:
-    readScene("../res/txt_scenes/scene1.txt");
+  //  readScene("../res/txt_scenes/scene1.txt");
     //for scene 2:
  //   readScene("../res/txt_scenes/scene2.txt");
     //for scene 3:
