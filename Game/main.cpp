@@ -340,9 +340,7 @@ glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level
             if (!inside) { //comes from the outside of the surface
                 normal = -normal;
             }
-            glm::vec3 refractedColor = constructRayThroughPixel(hitPoint + normal , refractedRay, level + 1);
-
-            color = 0.8f * refractedColor + 0.2f * constructRayThroughPixel(hitPoint, ray, level + 1);
+            color = constructRayThroughPixel(hitPoint + normal, refractedRay, level + 1);
         }
     }
     else { 
