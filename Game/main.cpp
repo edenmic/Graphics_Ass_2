@@ -241,7 +241,7 @@ glm::vec3 specularRef(Object* o, Light light, vec3 hitPoint, vec3 currPoint) {
     return specularColor;
 }
 
-glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level) {
+glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level, float eta) {
     if (level > 5) {
         return vec3(0);
     }
@@ -329,18 +329,19 @@ glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level
         else if (closestObject->reflective) {
             glm::vec3 hitPoint = currPoint + (float)closestT * ray;
             vec3 newRay = normalize(reflect(ray, closestObject->getNormal(hitPoint)));
-            color = constructRayThroughPixel(hitPoint, newRay, level++);
+            color = constructRayThroughPixel(hitPoint, newRay, level++, eta);
         }
         else if (closestObject->transparent) {
             glm::vec3 hitPoint = currPoint + (float)closestT * ray;
             glm::vec3 normal = closestObject->getNormal(hitPoint);
-            float eta = 1.0f / 1.5f; //the refractive index of a material
+          //  float eta = 1.0f / 1.5f; //the refractive index of a material
             glm::vec3 refractedRay = glm::refract(ray, normal,  eta); //calculate the direction of the refracted ray
             bool inside = glm::dot(ray, normal) > 0; //the ray is coming from the inside or the outside of a surface
             if (!inside) { //comes from the outside of the surface
+                eta = 1.0f / eta;
                 normal = -normal;
             }
-            color = constructRayThroughPixel(hitPoint + normal, refractedRay, level + 1);
+            color = constructRayThroughPixel(hitPoint + normal, refractedRay, level + 1, eta);
         }
     }
     else { 
@@ -383,8 +384,8 @@ int main(int argc, char* argv[]) {
         for (int j = 0; j < DISPLAY_WIDTH; j++) {
             glm::vec3 currPoint = calculate3Dcord(i, j, lengthPixel);
             glm::vec3 ray = glm::normalize(currPoint - camera);
-
-            glm::vec3 color = constructRayThroughPixel(camera, ray, 0);
+            float eta = 1.0f / 1.5f; //the refractive index of a material
+            glm::vec3 color = constructRayThroughPixel(camera, ray, 0, eta);
 
             data[(i + j * DISPLAY_WIDTH) * 4] = color.r * 255;
             data[(i + j * DISPLAY_WIDTH) * 4 + 1] = color.g * 255;
