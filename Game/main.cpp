@@ -334,12 +334,14 @@ glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level
         else if (closestObject->transparent) {
             glm::vec3 hitPoint = currPoint + (float)closestT * ray;
             glm::vec3 normal = closestObject->getNormal(hitPoint);
-          //  float eta = 1.0f / 1.5f; //the refractive index of a material
             glm::vec3 refractedRay = glm::refract(ray, normal,  eta); //calculate the direction of the refracted ray
             bool inside = glm::dot(ray, normal) > 0; //the ray is coming from the inside or the outside of a surface
             if (!inside) { //comes from the outside of the surface
-                eta = 1.0f / eta;
+                eta = 1.0f / 1.5f;
                 normal = -normal;
+            }
+            else {
+                eta = 1.5f;
             }
             color = constructRayThroughPixel(hitPoint + normal, refractedRay, level + 1, eta);
         }
