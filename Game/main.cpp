@@ -334,18 +334,20 @@ glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level
         else if (closestObject->transparent) {
             glm::vec3 hitPoint = currPoint + (float)closestT * ray;
             glm::vec3 normal = closestObject->getNormal(hitPoint);
-            glm::vec3 refractedRay = normalize(glm::refract(normalize(ray), normal,eta)); //calculate the direction of the refracted ray
-            bool inside = glm::dot(refractedRay, normal) > 0; //the ray is coming from the inside or the outside of a surface
+            bool inside = glm::dot(ray, normal) > 0; //the ray is coming from the inside or the outside of a surface
+            float dot = glm::dot(ray, normal);
             if (!inside) { //comes from the outside of the surface
                 eta = 1.0f / 1.5f;
-                normal = -normal;
-              //  std::cout << "outside" ;
+
+            //    std::cout << "outside" ;
             }
             else {
                 eta = 1.5f;
-                std::cout << "inside" << std::endl;
+                normal = -normal;
+              //  std::cout << "inside" << std::endl;
             }
-            color = constructRayThroughPixel(hitPoint + normal, refractedRay, level + 1, eta);
+            glm::vec3 refractedRay = normalize(glm::refract(normalize(ray), normal, eta)); //calculate the direction of the refracted ray
+            color = constructRayThroughPixel(hitPoint, refractedRay, level + 1, eta);
         }
     }
     else { 
@@ -368,11 +370,11 @@ int main(int argc, char* argv[]) {
     scn->Init();
     display.SetScene(scn);
   // for custom_scene
-    readScene("../res/txt_scenes/custom_scene.txt");
+  //  readScene("../res/txt_scenes/custom_scene.txt");
     //for scene 1:
-  //  readScene("../res/txt_scenes/scene1.txt");
+    readScene("../res/txt_scenes/scene2.txt");
     //for scene 2:
- //   readScene("../res/txt_scenes/scene2.txt");
+  //  readScene("../res/txt_scenes/scene2.txt");
     //for scene 3:
   //   readScene("../res/txt_scenes/scene3.txt");
     //for scene 4:
