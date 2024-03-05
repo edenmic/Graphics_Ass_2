@@ -329,7 +329,7 @@ glm::vec3 constructRayThroughPixel(glm::vec3 currPoint, glm::vec3 ray, int level
         else if (closestObject->reflective) {
             glm::vec3 hitPoint = currPoint + (float)closestT * ray;
             vec3 newRay = normalize(reflect(ray, closestObject->getNormal(hitPoint)));
-            color = constructRayThroughPixel(hitPoint, newRay, level++, eta);
+            color = constructRayThroughPixel(hitPoint, newRay, level+1, eta);
         }
         else if (closestObject->transparent) {
             glm::vec3 hitPoint = currPoint + (float)closestT * ray;
